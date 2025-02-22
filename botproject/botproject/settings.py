@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
+import os 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-jj7ul1(iuhhe=-1=*n8v0fjx1zogwe6l30bg^lolc#!ry38de=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '8000-idx-hokimyat-1740074206848.cluster-23wp6v3w4jhzmwncf7crloq3kw.cloudworkstations.dev']
 
 
 # Application definition
@@ -81,14 +81,23 @@ WSGI_APPLICATION = 'botproject.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'postgres',         # PostgreSQL ma'lumotlar bazasi nomi
-        'USER': 'postgres',       # PostgreSQL foydalanuvchi nomi
-        'PASSWORD': 'admin', # PostgreSQL foydalanuvchi paroli
-        'HOST': 'localhost',    # Server manzili, odatda 'localhost'
-        'PORT': '5432',         # Standart PostgreSQL porti
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'python_boss_robot',
+        'USER': 'python_boss_robot_user',
+        'PASSWORD': 'fMaBayriYAZRWXtwSpfOF4jYibSnufC2',
+        'HOST': 'dpg-cukn5hbtq21c73e9b48g-a.oregon-postgres.render.com',
+        'PORT': '5432',
     }
 }
+
+
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://8000-idx-hokimyat-1740074206848.cluster-23wp6v3w4jhzmwncf7crloq3kw.cloudworkstations.dev',
+    'https://*.cloudworkstations.dev', 
+    'https://localhost'
+]
+
 
 
 # Password validation
@@ -109,13 +118,29 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+CORS_ALLOW_ALL_ORIGINS = True 
+CORS_ALLOW_CREDENTIALS = True
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.MultiPartParser',
+        'rest_framework.parsers.FormParser',
+    ],
+}
+
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'uz'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Tashkent'
 
 USE_I18N = True
 
@@ -127,7 +152,12 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+TELEGRAM_BOT_TOKEN="7852926353:AAGvQNh9cCS7RKGmb2ffb798JJqrIozeMms"
