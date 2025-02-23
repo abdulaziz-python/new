@@ -16,11 +16,21 @@ class JobTitleAdmin(admin.ModelAdmin):
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'phone_number', 'jshir', 'job_title', 'mahalla', 'is_admin', 'created_at')
-    list_filter = ('job_title', 'mahalla', 'is_admin')
-    search_fields = ('full_name', 'phone_number', 'jshir')
+    list_display = ('full_name', 'phone_number', 'jshir', 'get_job_title', 'get_mahalla', 'created_at')
+    list_filter = ('job_title', 'mahalla')
+    search_fields = ('full_name', 'phone_number', 'jshir', 'telegram_id')
     ordering = ('-created_at',)
     readonly_fields = ('created_at',)
+
+    def get_job_title(self, obj):
+        return obj.job_title.title if obj.job_title else '-'
+    get_job_title.short_description = 'Lavozim'
+    get_job_title.admin_order_field = 'job_title__title'
+
+    def get_mahalla(self, obj):
+        return obj.mahalla.name if obj.mahalla else '-'
+    get_mahalla.short_description = 'Mahalla'
+    get_mahalla.admin_order_field = 'mahalla__name'
 
 class TaskProgressImageInline(admin.TabularInline):
     model = TaskProgressImage
@@ -55,3 +65,15 @@ class TaskProgressAdmin(admin.ModelAdmin):
     search_fields = ('task__title', 'user__full_name')
     readonly_fields = ('created_at', 'updated_at')
     inlines = [TaskProgressImageInline, TaskProgressFileInline]
+
+    fieldsets = (
+        ('Asosiy ma\'lumotlar', {
+            'fields': ('task', 'user', 'description', 'status')
+        }),
+        ('Admin baholash', {
+            'fields': ('admin_mark', 'admin_comment')
+        }),
+        ('Vaqtlar', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
