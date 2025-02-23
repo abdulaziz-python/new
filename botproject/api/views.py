@@ -12,18 +12,68 @@ from .serializers import *
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def verify_user(request):
-    phone = request.data.get('phone')
-    jshir = request.data.get('jshir')
-    
+    """Verify user with phone and JSHIR"""
     try:
-        user = User.objects.get(phone_number=phone, jshir=jshir)
+        phone = request.data.get('phone', '').strip()
+        jshir = request.data.get('jshir', '').strip()
+        
+        if not phone or not jshir:
+            return Response({
+                'status': 'error',
+                'message': 'Telefon raqami va JSHIR talab qilinadi'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Clean phone number
+        if phone.startswith('+'):
+            phone = phone[1:]
+        
+        try:
+            user = User.objects.get(phone_number=phone, jshir=jshir)
+            
+            # Update telegram_id if not set
+            telegram_id = request.data.get('telegram_id')
+            if telegram_id and not user.telegram_id:
+                user.telegram_id = telegram_id
+                user.save()
+            
+            return Response({
+                'status': 'success',
+                'user': {
+                    'id': user.id,
+                    'full_name': user.full_name,
+                    'job_title_name': user.job_title.title if user.job_title else None,
+                    'mahalla_name': user.mahalla.name if user.mahalla else None,
+                    'is_admin': user.is_admin
+                }
+            })
+        except User.DoesNotExist:
+            return Response({
+                'status': 'error',
+                'message': 'Foydalanuvchi topilmadi. Iltimos, ma\'lumotlaringizni tekshiring.'
+            }, status=status.HTTP_404_NOT_FOUND)
+            
+    except Exception as e:
+        logger.error(f"Error in verify_user: {e}")
+        return Response({
+            'status': 'error',
+            'message': 'Server xatosi yuz berdi'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_user_info(request):
+    telegram_id = request.GET.get('telegram_id')
+    try:
+        user = User.objects.get(telegram_id=telegram_id)
         return Response({
             'status': 'success',
             'user': {
                 'id': user.id,
                 'full_name': user.full_name,
-                'job_title': user.job_title.title,
-                'mahalla': user.mahalla.name,
+                'job_title_name': user.job_title.title if user.job_title else None,
+                'mahalla_name': user.mahalla.name if user.mahalla else None,
                 'is_admin': user.is_admin
             }
         })
@@ -33,22 +83,6 @@ def verify_user(request):
             'message': 'Foydalanuvchi topilmadi'
         }, status=status.HTTP_404_NOT_FOUND)
 
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def get_user_info(request):
-    telegram_id = request.GET.get('telegram_id')
-    try:
-        user = User.objects.get(telegram_id=telegram_id)
-        serializer = UserSerializer(user)
-        return Response({
-            'status': 'success',
-            'user': serializer.data
-        })
-    except User.DoesNotExist:
-        return Response({
-            'status': 'error',
-            'message': 'Foydalanuvchi topilmadi'
-        }, status=status.HTTP_404_NOT_FOUND)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -92,7 +126,6 @@ def submit_progress(request):
             status='in_progress'
         )
         
-        # Handle images
         images = request.FILES.getlist('images')
         for image in images:
             TaskProgressImage.objects.create(
@@ -100,7 +133,6 @@ def submit_progress(request):
                 image=image
             )
         
-        # Handle files
         files = request.FILES.getlist('files')
         for file in files:
             TaskProgressFile.objects.create(
@@ -153,7 +185,6 @@ def mark_progress(request, progress_id):
 def export_users(request):
     users = User.objects.all()
     
-    # Create DataFrame
     data = {
         'F.I.O': [user.full_name for user in users],
         'Telefon': [user.phone_number for user in users],
@@ -166,7 +197,6 @@ def export_users(request):
     
     df = pd.DataFrame(data)
     
-    # Create Excel file
     excel_file = io.BytesIO()
     df.to_excel(excel_file, index=False)
     excel_file.seek(0)
